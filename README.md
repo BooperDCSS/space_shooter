@@ -5,3 +5,6 @@ Code written while following [their tutorial on YouTube](https://www.youtube.com
 
 All files uploaded purely for educational purposes. Original repository has no
 license and confers no explicit rights to the user.
+
+Projects uploaded here are in preparation of a custom game I want to write using
+Pygame-ce.
