@@ -76,9 +76,9 @@ class Meteor(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.start_time >= 4000:
             self.kill()
 
-def collisions():
+def laser_collisions():
     for laser in laser_sprites:
-        laser_hits = pygame.sprite.spritecollide(laser, meteor_sprites, True)
+        laser_hits = pygame.sprite.spritecollide(laser, meteor_sprites, True, pygame.sprite.collide_mask)
         if laser_hits:
             laser.kill()
 
@@ -87,6 +87,8 @@ def display_score(font):
     text_surface = font.render(str(current_time), True, "#eeeeee")
     text_rect = text_surface.get_frect(midbottom = ((WINDOW_WIDTH / 2), (WINDOW_HEIGHT - 50)))
     display_surface.blit(text_surface, text_rect)
+    padded_rect = text_rect.inflate(20, 15).move(0, -5)
+    pygame.draw.rect(display_surface, "red", padded_rect, 5, 5)
 
 ### CREATING GAME WINDOW AND TITLE (notice set_mode takes a tuple) ###
 display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -140,10 +142,10 @@ def main():
         # update the sprites according to their update methods
         # and check for collisions
         all_sprites.update(dt)
-        collisions()
+        laser_collisions()
 
         # check for game-ending collision
-        if pygame.sprite.spritecollide(player, meteor_sprites, False):
+        if pygame.sprite.spritecollide(player, meteor_sprites, False, pygame.sprite.collide_mask):
             print("Game over, man")
             running = False
 
