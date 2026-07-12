@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
             if current_time - self.laser_shoot_time >= self.cooldown_duration:
                 self.can_shoot = True
 
-    def update(self, dt):
+    def update(self, dt, sounds):
         keys = pygame.key.get_pressed()
 
         # movement
@@ -49,6 +49,7 @@ class Player(pygame.sprite.Sprite):
         # zee missiles!
         if pygame.key.get_just_pressed()[pygame.K_SPACE] and self.can_shoot:
             Laser(laser_surface, self.rect.midtop, (all_sprites, laser_sprites))
+            sounds.play()
             self.can_shoot = False
             self.laser_shoot_time = pygame.time.get_ticks()
 
@@ -71,7 +72,7 @@ class Laser(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_frect(midbottom=pos)
 
-    def update(self, dt):
+    def update(self, dt, sounds):
         self.rect.centery -= 400 * dt
         if self.rect.bottom < 0:
             self.kill()
@@ -91,7 +92,7 @@ class Meteor(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2(uniform(-0.5, 0.5), 1)
         self.rotation = randint(-30, 30)
 
-    def update(self, dt):
+    def update(self, dt, sounds):
         self.rect.center += self.direction * self.speed * dt
         if pygame.time.get_ticks() - self.start_time >= 4000:
             self.kill()
@@ -113,7 +114,7 @@ class Explosions(pygame.sprite.Sprite):
         self.image = frames[self.frame_index]
         self.rect = self.image.get_frect(center=pos)
 
-    def update(self, dt):
+    def update(self, dt, sounds):
         self.frame_index += 20 * dt
         # dt is always fractional... so the frame_index increments slowly
         # the 20 functions as a kind of speed control on the animation
@@ -125,7 +126,7 @@ class Explosions(pygame.sprite.Sprite):
 
 
 ### GAME FUNCTIONS USED IN MAIN() ###
-def check_laser_meteor_collisions():
+def check_laser_meteor_collisions(sound):
     for laser in laser_sprites:
         laser_hits = pygame.sprite.spritecollide(
             laser, meteor_sprites, True, pygame.sprite.collide_mask
@@ -133,6 +134,7 @@ def check_laser_meteor_collisions():
         # note that this function removes the meteor on collision too
         if laser_hits:
             Explosions(explosion_frames, laser.rect.midtop, all_sprites)
+            sound.play()
             laser.kill()
 
 
@@ -178,12 +180,10 @@ explosion_frames = [
     for i in range(21)
 ]
 
-
 # def get_stem(file):
 #     return int(file.stem)
 # explosion_frames = sorted([ex_frame for ex_frame in EXPLOSIONS_DIR.iterdir() if ex_frame.is_file()], key=get_stem)
 # this is my old solution for getting the frames; it works but requires loading the surface within the class
-
 
 
 ### CUSTOM EVENTS DEFINITIONS ###
@@ -194,6 +194,17 @@ def main():
     pygame.init()
     clock = pygame.time.Clock()
     running = True
+
+    ### IMPORT SOUNDS ###
+    # inside main() because pygame.init() is required
+    laser_sound = pygame.mixer.Sound(ROOT_DIR.joinpath("audio", "laser.wav"))
+    laser_sound.set_volume(0.3)
+    explosion_sound = pygame.mixer.Sound(ROOT_DIR.joinpath("audio", "explosion.wav"))
+    explosion_sound.set_volume(0.3)
+    damage_sound = pygame.mixer.Sound(ROOT_DIR.joinpath("audio", "damage.ogg"))
+    game_music = pygame.mixer.Sound(ROOT_DIR.joinpath("audio", "game_music.wav"))
+    game_music.set_volume(0.4)
+    game_music.play(loops = -1) # this is the setting for infinite looping
 
     ### TEXT SURFACES ###
     # inside main() because pygame.init() is required and I'm using main()
@@ -223,8 +234,8 @@ def main():
 
         # update the sprites according to their update methods
         # and check for collisions
-        all_sprites.update(dt)
-        check_laser_meteor_collisions()
+        all_sprites.update(dt, laser_sound)
+        check_laser_meteor_collisions(explosion_sound)
 
         # check for game-ending collision
         if pygame.sprite.spritecollide(
