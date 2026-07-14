@@ -136,11 +136,12 @@ def check_laser_meteor_collisions(sound):
             Explosions(explosion_frames, laser.rect.midtop, all_sprites)
             sound.play()
             laser.kill()
+            return laser_hits
 
-
-def display_score(font):
+def display_score(score, font):
     current_time = pygame.time.get_ticks() // 100
-    text_surface = font.render(str(current_time), True, "#eeeeee")
+    current_score = current_time + score
+    text_surface = font.render(str(current_score), True, "#eeeeee")
     text_rect = text_surface.get_frect(
         midbottom=((WINDOW_WIDTH / 2), (WINDOW_HEIGHT - 50))
     )
@@ -218,8 +219,9 @@ def main():
 
     player = Player(all_sprites)
 
-    ### INITIATING EVENTS ###
+    ### INITIATING EVENTS & SCORE ###
     pygame.time.set_timer(meteor_event, 500)
+    score = 0
 
     ### BEGINNING OF GAME LOOP HERE ###
     while running:
@@ -235,14 +237,16 @@ def main():
         # update the sprites according to their update methods
         # and check for collisions
         all_sprites.update(dt, laser_sound)
-        check_laser_meteor_collisions(explosion_sound)
+        laser_hits = check_laser_meteor_collisions(explosion_sound)
+        if laser_hits:
+            score += 100
 
         # check for game-ending collision
         if pygame.sprite.spritecollide(
             player, meteor_sprites, False, pygame.sprite.collide_mask
         ):
             print(
-                f"Game over, man. You scored {pygame.time.get_ticks() // 100} points. Nice job!"
+                f"Game over, man. You scored {score} points. Nice job!"
             )
             running = False
 
@@ -250,7 +254,7 @@ def main():
         # .flip() can be used to update just a part of the window
         display_surface.fill("#3a2e3f")
         all_sprites.draw(display_surface)
-        display_score(font)
+        display_score(score, font)
 
         pygame.display.update()
 
